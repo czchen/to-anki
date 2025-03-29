@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 import argparse
 import dataclasses
+import random
 import re
 import sys
 
+import genanki
 import pdfplumber
 
 
@@ -19,15 +21,20 @@ class Question:
 
 
 def get_args():
-    parser = argparse.ArgumentParser(description='Drone PDF Question Extractor')
-    parser.add_argument('file', type=str, help='Path to the PDF file')
+    parser = argparse.ArgumentParser(description='Drone PDF Question Bank Extractor')
+    parser.add_argument('--name', type=str, nargs=1, help='Name')
+    parser.add_argument('--pdf', type=str, nargs=1,help='Question bank')
+    parser.add_argument('--apkg', type=str, nargs=1, help='Output package name')
     return parser.parse_args()
 
 
 def main():
     args = get_args()
-    qs = extract_questions_from_pdf(args.file)
-    print(qs)
+
+    qs = extract_questions_from_pdf(args.pdf[0])
+    desk = build_anki_deck(args.name[0], qs)
+
+    genanki.Package(desk).write_to_file(args.apkg[0])
 
 
 def extract_questions_from_pdf(file):
@@ -105,6 +112,46 @@ def extract_questions_from_pdf(file):
                             i += 1
 
     return qs
+
+
+def build_anki_deck(name,  qs):
+    model = genanki.Model(
+        random_id(),
+        name,
+        fields=[
+            {'name': 'Question'},
+            {'name': 'Answer'},
+        ],
+        templates=[
+            {
+                'name': 'Card 1',
+                'qfmt': '{{Question}}',
+                'afmt': '{{FrontSide}}<hr id="answer">{{Answer}}',
+            },
+        ],
+    )
+
+    desk = genanki.Deck(
+        random_id(),
+        name,
+    )
+
+    for q in qs:
+        note = genanki.Note(
+            model=model,
+            fields=[
+                f'{q.question}<br>{q.choice_a}<br>{q.choice_b}<br>{q.choice_c}<br>{q.choice_d}',
+                q.answer,
+            ],
+            tags=[q.tag],
+        )
+        desk.add_note(note)
+
+    return desk
+
+
+def random_id():
+    return random.randrange(1 << 30, 1 << 31)
 
 
 if __name__ == '__main__':
