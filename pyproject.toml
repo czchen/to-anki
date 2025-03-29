@@ -1,0 +1,18 @@
+[project]
+name = "to-anki"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "ChangZhuo Chen (陳昌倬)",email = "czchen@czchen.org"}
+]
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "pdfplumber (>=0.11.6,<0.12.0)",
+    "genanki (>=0.13.1,<0.14.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
