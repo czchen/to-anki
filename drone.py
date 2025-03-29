@@ -49,8 +49,8 @@ def extract_questions_from_pdf(file):
 
             for line in text.split('\n'):
                 if mode == 'question':
-                    if line == '第一章 民用航空法及相關法規答案':
-                        print('switch to answer mode')
+                    m = re.match(r'.*答案$', line)
+                    if m:
                         mode = 'answer'
                         continue
 
@@ -76,7 +76,7 @@ def extract_questions_from_pdf(file):
                             q = Question()
                         continue
 
-                    m = re.match(r'(?P<question>\d+[.].*)$', line)
+                    m = re.match(r'(?P<question>\d+.*)$', line)
                     if m:
                         q.question = m.group('question')
                         q.tag = t
@@ -89,7 +89,7 @@ def extract_questions_from_pdf(file):
                 if mode == 'answer':
                     no = ''
                     for token in line.split(' '):
-                        m = re.match(r'(?P<no>\d+[.])', token)
+                        m = re.match(r'(?P<no>\d+)[.]', token)
                         if m:
                             no = m.group('no')
                             continue
@@ -110,6 +110,10 @@ def extract_questions_from_pdf(file):
                         elif token == 'D':
                             qs[i].answer = qs[i].choice_d
                             i += 1
+
+        if i != len(qs):
+            print(f'Number of questions, and answers are mismatched: question = {len(qs)}, answer = {i}')
+            exit(-1)
 
     return qs
 
