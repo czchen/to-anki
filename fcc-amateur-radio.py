@@ -32,6 +32,7 @@ def main():
     args = get_args()
 
     qs = extract_questions_from_pdf(args.pdf[0])
+    print(f'Extracted {len(qs)} questions from {args.pdf[0]}')
     desk = build_anki_deck(args.name[0], qs)
     genanki.Package(desk).write_to_file(args.apkg[0])
 
@@ -44,12 +45,13 @@ def extract_questions_from_pdf(file):
     with pdfplumber.open(file) as pdf:
         for page in pdf.pages:
             for line in page.extract_text().split('\n'):
-                m = re.search(r'^SUBELEMENT (?P<number>T\d+) (?P<title>.*) [-–] \[', line)
+                m = re.search(r'^SUBELEMENT (?P<number>[GT]\d+) (?:[-–] )?(?P<title>.*) (?:[-–] )?\[', line)
+
                 if m:
                     tags[m.group('number')] = (m.group('number').strip() + '-' + m.group('title').strip()).replace(' ', '_')
                     continue
 
-                m = re.search(r'^(?P<number>T\d.{3})\s*\((?P<answer>[ABCD])\)', line)
+                m = re.search(r'^(?P<number>[GT]\d.{3})\s*\((?P<answer>[ABCD])\)', line)
                 if m:
                     q.question = m.group('number') + '.'
                     q.answer = m.group('answer')
@@ -108,7 +110,6 @@ def extract_questions_from_pdf(file):
                     q.choice_c += ' ' + line.strip()
                 elif previous_step == 'choice_d':
                     q.choice_d += ' ' + line.strip()
-
     return qs
 
 
