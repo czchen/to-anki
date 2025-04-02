@@ -22,9 +22,9 @@ class Question:
 
 def get_args():
     parser = argparse.ArgumentParser(description='Drone PDF Question Bank Extractor')
-    parser.add_argument('--name', type=str, nargs=1, help='Name')
-    parser.add_argument('--pdf', type=str, nargs=1,help='Question bank')
-    parser.add_argument('--apkg', type=str, nargs=1, help='Output package name')
+    parser.add_argument('--name', type=str, nargs=1, required=True, help='Name')
+    parser.add_argument('--pdf', type=str, nargs=1, required=True, help='Question bank')
+    parser.add_argument('--apkg', type=str, nargs=1, required=True, help='Output package name')
     return parser.parse_args()
 
 
