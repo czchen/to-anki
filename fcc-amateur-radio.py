@@ -45,13 +45,13 @@ def extract_questions_from_pdf(file):
     with pdfplumber.open(file) as pdf:
         for page in pdf.pages:
             for line in page.extract_text().split('\n'):
-                m = re.search(r'^SUBELEMENT (?P<number>[GT]\d+) (?:[-–] )?(?P<title>.*) (?:[-–] )?\[', line)
+                m = re.search(r'^SUBELEMENT (?P<number>[EGT]\d+) (?:[-–] )?(?P<title>.*) (?:[-–] )?\[', line)
 
                 if m:
                     tags[m.group('number')] = (m.group('number').strip() + '-' + m.group('title').strip()).replace(' ', '_')
                     continue
 
-                m = re.search(r'^(?P<number>[GT]\d.{3})\s*\((?P<answer>[ABCD])\)', line)
+                m = re.search(r'^(?P<number>[EGT]\d.{3})\s*\((?P<answer>[ABCD])\)', line)
                 if m:
                     q.question = m.group('number') + '.'
                     q.answer = m.group('answer')
