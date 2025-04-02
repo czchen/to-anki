@@ -40,43 +40,52 @@ def extract_questions_from_pdf(file):
     qs = []
     tags = {}
     q = Question()
+    previous_step = None
     with pdfplumber.open(file) as pdf:
         for page in pdf.pages:
             for line in page.extract_text().split('\n'):
-                m = re.search(r'^SUBELEMENT (?P<title>(?P<number>T\d+) .*) [-–] \[', line)
+                m = re.search(r'^SUBELEMENT (?P<number>T\d+) (?P<title>.*) [-–] \[', line)
                 if m:
-                    tags[m.group('number')] = m.group('title').replace(' ', '_')
+                    tags[m.group('number')] = (m.group('number').strip() + '-' + m.group('title').strip()).replace(' ', '_')
                     continue
 
-                m = re.search(r'^(?P<number>T\d.{3}) \((?P<answer>[ABCD])\)', line)
+                m = re.search(r'^(?P<number>T\d.{3})\s*\((?P<answer>[ABCD])\)', line)
                 if m:
-                    q.question = m.group('number')
+                    q.question = m.group('number') + '.'
                     q.answer = m.group('answer')
 
                     t = m.group('number')[:2]
                     if t in tags:
                         q.tags.append(tags[t])
+
+                    previous_step = 'question'
                     continue
 
                 m = re.search(r'^A[.].*', line)
                 if m:
                     q.choice_a = line.strip()
+                    previous_step = 'choice_a'
                     continue
 
                 m = re.search(r'^B[.].*', line)
                 if m:
                     q.choice_b = line.strip()
+                    previous_step = 'choice_b'
                     continue
 
                 m = re.search(r'^C[.].*', line)
                 if m:
                     q.choice_c = line.strip()
+                    previous_step = 'choice_c'
                     continue
 
                 m = re.search(r'^D[.].*', line)
                 if m:
                     q.choice_d = line.strip()
+                    previous_step = 'choice_d'
+                    continue
 
+                if line.strip() == '~~':
                     if q.answer == 'A':
                         q.answer = q.choice_a
                     elif q.answer == 'B':
@@ -88,13 +97,17 @@ def extract_questions_from_pdf(file):
 
                     qs.append(q)
                     q = Question()
-                    continue
 
-                if line.strip() == '~~':
-                    continue
-
-                if q.question:
+                if previous_step == 'question':
                     q.question += ' ' + line.strip()
+                elif previous_step == 'choice_a':
+                    q.choice_a += ' ' + line.strip()
+                elif previous_step == 'choice_b':
+                    q.choice_b += ' ' + line.strip()
+                elif previous_step == 'choice_c':
+                    q.choice_c += ' ' + line.strip()
+                elif previous_step == 'choice_d':
+                    q.choice_d += ' ' + line.strip()
 
     return qs
 
