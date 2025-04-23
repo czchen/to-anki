@@ -48,10 +48,16 @@ def extract_questions_from_pdf(file):
             text = page.extract_text()
 
             for line in text.split('\n'):
+                m = re.match(r'^\d+$', line)
+                if m:
+                    # skip page number
+                    continue
+
                 if mode == 'question':
                     m = re.match(r'.*答案$', line)
                     if m:
                         mode = 'answer'
+                        print(f'Found {len(qs)} questions ...')
                         continue
 
                     m = re.match(r'第.章 (?P<tag>.*)$', line)
@@ -76,7 +82,7 @@ def extract_questions_from_pdf(file):
                             q = Question()
                         continue
 
-                    m = re.match(r'(?P<question>\d+.*)$', line)
+                    m = re.match(r'(?P<question>\d+[.].*)$', line)
                     if m:
                         q.question = m.group('question')
                         q.tag = t
@@ -95,7 +101,7 @@ def extract_questions_from_pdf(file):
                             continue
 
                         if not qs[i].question.startswith(no):
-                            print(f'parsing error {i=}, {qs[i].question=} != {no=}')
+                            print(f'parsing error {i=}, {qs[i].question=} != {no=}, {qs[i]=}')
                             exit(-1)
 
                         if token == 'A':
