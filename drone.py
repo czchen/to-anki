@@ -41,8 +41,9 @@ def extract_questions_from_pdf(file):
     qs = []
     with pdfplumber.open(file) as pdf:
         t = ''
-        q = Question()
+        q = None
         mode = 'question'
+        question_mode = ''
         i = 0
         for page in pdf.pages:
             text = page.extract_text()
@@ -56,6 +57,8 @@ def extract_questions_from_pdf(file):
                 if mode == 'question':
                     m = re.match(r'.*答案$', line)
                     if m:
+                        if q:
+                            qs.append(q)
                         mode = 'answer'
                         print(f'Found {len(qs)} questions ...')
                         continue
@@ -71,26 +74,48 @@ def extract_questions_from_pdf(file):
 
                         if choice.startswith('(A)'):
                             q.choice_a = choice
+                            question_mode = 'choice_a'
                         if choice.startswith('(B)'):
                             q.choice_b = choice
+                            question_mode = 'choice_b'
                         if choice.startswith('(C)'):
                             q.choice_c = choice
+                            question_mode = 'choice_c'
                         if choice.startswith('(D)'):
                             q.choice_d = choice
-
-                            qs.append(q)
-                            q = Question()
+                            question_mode = 'choice_d'
                         continue
 
                     m = re.match(r'(?P<question>\d+[.].*)$', line)
                     if m:
+                        if q:
+                            qs.append(q)
+                        q = Question()
                         q.question = m.group('question')
+                        question_mode = 'question'
                         q.tag = t
                         continue
 
-                    if len(q.question) > 0 and q.question[-1] != '？':
-                        q.question += line
-                        continue
+                    if q:
+                        if question_mode == 'question':
+                            q.question += line
+                            continue
+
+                        if question_mode == 'choice_a':
+                            q.choice_a += line
+                            continue
+
+                        if question_mode == 'choice_b':
+                            q.choice_b += line
+                            continue
+
+                        if question_mode == 'choice_c':
+                            q.choice_c += line
+                            continue
+
+                        if question_mode == 'choice_d':
+                            q.choice_d += line
+                            continue
 
                 if mode == 'answer':
                     no = ''
@@ -102,6 +127,7 @@ def extract_questions_from_pdf(file):
 
                         if not qs[i].question.startswith(no):
                             print(f'parsing error {i=}, {qs[i].question=} != {no=}, {qs[i]=}')
+                            print(f'{qs=}')
                             exit(-1)
 
                         if token == 'A':
